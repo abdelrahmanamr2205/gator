@@ -54,3 +54,23 @@ func handlerAddFeed(s *state, cmd command) error {
 
 	return nil
 }
+
+func handlerFeeds(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return fmt.Errorf("Too many arguments\nUsage: gator %s", cmd.name)
+	}
+
+	feeds, err := s.db.GetAllFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("error fetching feeds %w", err)
+	}
+
+	for _, feed := range feeds {
+		fmt.Println("feed name:", feed.FeedName)
+		fmt.Println("feed url:", feed.FeedUrl)
+		fmt.Println("owning user:", feed.UserName)
+		fmt.Println()
+	}
+
+	return nil
+}
