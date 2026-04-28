@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/AbdelrahmanAmr2205/gator/internal/config"
@@ -34,4 +35,15 @@ func (c *commands) run(s *state, cmd command) error {
 
 func (c *commands) register(name string, f HandlerFunc) {
 	c.handlers[name] = f
+}
+
+func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) HandlerFunc {
+	return func(s *state, cmd command) error {
+		user, err := s.db.GetUser(context.Background(), s.conf.CurrentUserName)
+		if err != nil {
+			return fmt.Errorf("error fetching user: %w", err)
+		}
+
+		return handler(s, cmd, user)
+	}
 }
