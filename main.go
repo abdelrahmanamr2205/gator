@@ -23,7 +23,7 @@ func main() {
 	defer db.Close()
 
 	st := &state{db: database.New(db), conf: &conf}
-	cmds := commands{handlers: map[string]func(*state, command) error{}}
+	cmds := commands{handlers: map[string]HandlerFunc{}}
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
 	cmds.register("reset", handlerReset)

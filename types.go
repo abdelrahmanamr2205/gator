@@ -17,8 +17,10 @@ type command struct {
 	args []string
 }
 
+type HandlerFunc func(*state, command) error
+
 type commands struct {
-	handlers map[string]func(*state, command) error
+	handlers map[string]HandlerFunc
 }
 
 func (c *commands) run(s *state, cmd command) error {
@@ -30,6 +32,6 @@ func (c *commands) run(s *state, cmd command) error {
 	return f(s, cmd)
 }
 
-func (c *commands) register(name string, f func(*state, command) error) {
+func (c *commands) register(name string, f HandlerFunc) {
 	c.handlers[name] = f
 }
