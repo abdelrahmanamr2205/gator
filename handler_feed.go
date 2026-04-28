@@ -48,9 +48,21 @@ func handlerAddFeed(s *state, cmd command) error {
 		return fmt.Errorf("error adding feed: %w", err)
 	}
 
-	fmt.Println("Feed created successfully")
+	feedFollow, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: t,
+		UpdatedAt: t,
+		FeedID:    feed.ID,
+		UserID:    user.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("error following feed: %w", err)
+	}
+
+	fmt.Println("Feed created and followed successfully")
 
 	fmt.Println(feed)
+	fmt.Println(feedFollow)
 
 	return nil
 }
@@ -70,6 +82,62 @@ func handlerFeeds(s *state, cmd command) error {
 		fmt.Println("feed url:", feed.FeedUrl)
 		fmt.Println("owning user:", feed.UserName)
 		fmt.Println()
+	}
+
+	return nil
+}
+
+func handlerFollow(s *state, cmd command) error {
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("Incorrect number of arguments\nUsage: gator %s <feed_url>", cmd.name)
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.conf.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("error fetching user: %w", err)
+	}
+
+	feed, err := s.db.GetFeedByURL(context.Background(), cmd.args[0])
+	if err != nil {
+		return fmt.Errorf("error fetching feed: %w", err)
+	}
+
+	t := time.Now()
+	feedFollow, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: t,
+		UpdatedAt: t,
+		FeedID:    feed.ID,
+		UserID:    user.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("error following feed: %w", err)
+	}
+
+	fmt.Printf("Feed %s followed successfully\n", feed.Name)
+	fmt.Println(feedFollow)
+
+	return nil
+}
+
+func handlerFollowing(s *state, cmd command) error {
+	if len(cmd.args) != 0 {
+		return fmt.Errorf("Too many arguments\nUsage: gator %s", cmd.name)
+	}
+
+	user, err := s.db.GetUser(context.Background(), s.conf.CurrentUserName)
+	if err != nil {
+		return fmt.Errorf("error fetching user: %w", err)
+	}
+
+	feedFollows, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
+	if err != nil {
+		return fmt.Errorf("error fetching follows: %w", err)
+	}
+
+	fmt.Println("You are following:")
+	for i, follow := range feedFollows {
+		fmt.Printf("%d. %s\n", i+1, follow.FeedName)
 	}
 
 	return nil
