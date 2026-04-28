@@ -17,3 +17,13 @@ FROM feeds JOIN users ON feeds.user_id = users.id;
 -- name: GetFeedByURL :one
 SELECT * FROM feeds
 WHERE url = $1;
+
+-- name: GetNextFeedToFetch :one
+SELECT * FROM feeds
+ORDER BY feeds.last_fetched_at NULLS FIRST;
+
+-- name: MarkFeedFetched :exec
+-- Update rows in 'feeds' where condition is met
+UPDATE feeds
+SET last_fetched_at = $2, updated_at = $2
+WHERE feeds.id = $1;
