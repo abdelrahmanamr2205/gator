@@ -6,24 +6,8 @@ import (
 	"time"
 
 	"github.com/AbdelrahmanAmr2205/gator/internal/database"
-	rssfeed "github.com/AbdelrahmanAmr2205/gator/internal/rss_feed"
 	"github.com/google/uuid"
 )
-
-func handlerAgg(s *state, cmd command) error {
-	if len(cmd.args) != 0 {
-		return fmt.Errorf("Too many arguments\nUsage: gator %s", cmd.name)
-	}
-
-	feed, err := rssfeed.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return fmt.Errorf("error fetching feed: %w", err)
-	}
-
-	fmt.Println(feed)
-
-	return nil
-}
 
 func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.args) != 2 {

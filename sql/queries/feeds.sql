@@ -20,10 +20,11 @@ WHERE url = $1;
 
 -- name: GetNextFeedToFetch :one
 SELECT * FROM feeds
-ORDER BY feeds.last_fetched_at NULLS FIRST;
+ORDER BY feeds.last_fetched_at NULLS FIRST
+LIMIT 1;
 
 -- name: MarkFeedFetched :exec
 -- Update rows in 'feeds' where condition is met
 UPDATE feeds
-SET last_fetched_at = $2, updated_at = $2
+SET updated_at = $2, last_fetched_at = $2
 WHERE feeds.id = $1;
