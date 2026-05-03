@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/AbdelrahmanAmr2205/gator/internal/database"
 	rssfeed "github.com/AbdelrahmanAmr2205/gator/internal/rss_feed"
+	"github.com/google/uuid"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -49,18 +52,35 @@ func scrapeFeeds(s *state) {
 		return
 	}
 	for _, item := range feed.Channel.Item {
-		fmt.Printf("Found post: %s\n", item.Title)
+		t := time.Now()
+		post, err := s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   t,
+			UpdatedAt:   t,
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: item.Description,
+			PublishedAt: parseDate(item.PubDate),
+			FeedID:      nextfeed.ID,
+		})
+
+		if err != nil {
+			if strings.Contains(err.Error(), "unique contraint") {
+				continue
+			} else {
+				log.Printf("Couldn't save post %s: %v", post.Title, err)
+			}
+		}
 	}
-	log.Printf("Feed %s collected, %v posts found", nextfeed.Name, len(feed.Channel.Item))
 }
 
-func printFeed(feed rssfeed.RSSFeed) {
-	fmt.Printf("Feed: %s\n", feed.Channel.Title)
-	fmt.Printf("Description: %s", feed.Channel.Description)
-	fmt.Println()
-	for _, item := range feed.Channel.Item {
-		fmt.Printf("Article Title: %s\n", item.Title)
-		fmt.Printf("Description:\n%s\n", item.Description)
-		fmt.Println()
+func parseDate(publishDate string) sql.NullTime {
+	formats := []string{time.RFC1123Z, time.RFC1123, time.RFC3339, time.RFC822Z, "2006-01-02 15:04:05"}
+	for _, format := range formats {
+		if t, err := time.Parse(format, publishDate); err == nil {
+			// success!
+			return sql.NullTime{Time: t, Valid: true}
+		}
 	}
+	return sql.NullTime{Time: time.Time{}, Valid: false}
 }
