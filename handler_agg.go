@@ -65,7 +65,7 @@ func scrapeFeeds(s *state) {
 		})
 
 		if err != nil {
-			if strings.Contains(err.Error(), "unique contraint") {
+			if strings.Contains(err.Error(), "unique constraint") {
 				continue
 			} else {
 				log.Printf("Couldn't save post %s: %v", post.Title, err)
@@ -79,7 +79,7 @@ func parseDate(publishDate string) sql.NullTime {
 	for _, format := range formats {
 		if t, err := time.Parse(format, publishDate); err == nil {
 			// success!
-			return sql.NullTime{Time: t, Valid: true}
+			return sql.NullTime{Time: t.UTC(), Valid: true}
 		}
 	}
 	return sql.NullTime{Time: time.Time{}, Valid: false}

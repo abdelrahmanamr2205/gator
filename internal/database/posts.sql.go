@@ -56,13 +56,20 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 }
 
 const gatePostsForUser = `-- name: GatePostsForUser :many
-SELECT id, created_at, updated_at, title, url, description, published_at, feed_id FROM posts
-ORDER BY published_at
-LIMIT $1
+SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.published_at, posts.feed_id FROM posts
+JOIN feed_follows ON posts.feed_id = feed_follows.feed_id
+WHERE feed_follows.user_id = $1
+ORDER BY published_at DESC
+LIMIT $2
 `
 
-func (q *Queries) GatePostsForUser(ctx context.Context, limit int32) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, gatePostsForUser, limit)
+type GatePostsForUserParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
+
+func (q *Queries) GatePostsForUser(ctx context.Context, arg GatePostsForUserParams) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, gatePostsForUser, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
